@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h4 style="display: flex; justify-content: center; margin: 0.5em 0 1em 0;">Simple visualization of solving linear regression with gradient descent</h4>
+
+<div style="display: flex;">
+
+    <div style="flex:1; float: left; text-align:center; padding: 4em 0 0 0; ">
+        <label style="margin:0 1em;">Learning rate</label>
+        <select id="lr" style="padding:0.2em;">
+            <option value="0.1">0.1</option>
+            <option value="0.01" selected>0.01</option>
+            <option value="0.001">0.001</option>
+            <option value="0.0001">0.0001</option>
+        </select>
+        <br> <br>
+        <label style="margin:0 1em;">Iterations</label>
+        <select id="iter" style="padding:0.2em;">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="40">40</option>
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="200">200</option>
+            <option value="300">300</option>
+            <option value="400">400</option>
+            <option value="500">500</option>
+            <option value="1000">1000</option>
+            <option value="2000">2000</option>
+        </select>
+        <br><br>
+        <button type="submit" style="margin:0 1em;">Apply</button>
+        <br> <br>
+        <div style="text-align:left; margin:0 0 0 1em; font-style: italic;"><p>Try with the lowest settings for both and increment the iterations to see how we are able to minimize the average error and find a better fit for our model</p></div>
+    </div>
+
+    <div style="flex:4; justify-content: center;" >
+        <div id="line_chart" style="width:40%; height:500px; display: inline-block; justify-content: center; margin: 0 2em;" ></div>
+
+        <div id="scatter_chart" style="width: 40%; height: 500px; display: inline-block; justify-content: center; margin: 0 2em "></div>
+    </div>
+</div>
+<div style="margin:-2em 1em 0 1em">
+    <p>Learning rate is how large a step we take with each iteration to minimize the average error. Also too large a step (try 0.1) can actually take us farther from the solution with each step!
+    The average error here is nothing but the difference between the actual scatter plot points and the regression line (the predicted values). This is the value that we are trying to minimize with gradient descent. The minimim error would mean that our actual value is closest to the regression line (predicted value), making it the optimal fit for the model.
+    </p>
+</div>
+
+{% endblock %}
+
+
+{% block js %}
+<script>
+    $(document).ready(function(){
+        var endpoint = '/api/chart/data/'
+        $.ajax({
+            method:"GET",
+            url: endpoint,
+            success: function(data){
+                initial_line = data.initial_line;
+                initial_scatter = data.initial_scatter;
+                initial_regression = data.initial_regression;
+
+                Highcharts.chart('line_chart', {
+                    dataLabels: false,
+                    chart: {
+                        zoomType: 'x',
+                        height: '400px',
+                    },
+
+                    title: {
+                        text: 'Average error'
+                    },
+                    
+                    xAxis: {
+                    title: {
+                        text: 'Iterations'
+                            }
+                    },
+
+
+                    tooltip: {
+                        valueDecimals: 2
+                    },
+
+                    series: [{
+                        data: initial_line,
+                        lineWidth: 1,
+                        name: 'Average error',
+                    }]
+
+                });
+
+                Highcharts.chart('scatter_chart', {
+
+                chart: {
+                    zoomType: 'xy',
+                    height: '400px',
+                },
+
+
+                boost: {
+                    useGPUTranslations: true,
+                    usePreAllocated: true
+                },
+
+
+                title: {
+                    text: 'Scatter chart'
+                },
+
+                legend: {
+                    enabled: true,
+                },
+
+                series: [{
+                    type: 'scatter',
+                    name: 'scatter values',
+                    data: initial_scatter,}, 
+
+                    {
+                    type: 'spline',
+                    name: 'regression line',
+                    data: initial_regression,
+                    }]
+
+                });
+            },
+            error: function(error_data){
+                console.log("error")
+                console.log(error_data)
+            },
+        });
+        $("button").click(function(){
+            var lr = $("#lr").val();
+            var iter = $("#iter").val();
+
+            $.post('/api/chart/data/',  // url
+            { lr: lr, iter: iter }, // data to be submit
+            function(data, status, xhr) {   // success callback function
+                data_line = data.data_line;
+                data_scatter = data.data_scatter;
+                data_regression = data.data_regression;
+
+                Highcharts.chart('line_chart', {
+                    dataLabels: false,
+                    chart: {
+                        zoomType: 'x',
+                        height: '400px',
+                    },
+
+                    title: {
+                        text: 'Average error'
+                    }, 
+
+                    xAxis: {
+                    title: {
+                        text: 'Iterations'
+                                }
+                            },
+                    tooltip: {
+                        valueDecimals: 2
+                    },
+
+                    series: [{
+                        data: data_line,
+                        lineWidth: 1,
+                        name: 'Average error',
+                    }]
+
+                });
+
+                Highcharts.chart('scatter_chart', {
+
+                chart: {
+                    zoomType: 'xy',
+                    height: '400px',
+                },
+
+                boost: {
+                    useGPUTranslations: true,
+                    usePreAllocated: true
+                },
+            
+
+                title: {
+                    text: 'Scatter chart'
+                },
+
+                legend: {
+                    enabled: true,
+                },
+
+                series: [{
+                    type: 'scatter',
+                    name: 'scatter values',
+                    data: data_scatter,}, 
+
+                    {
+                    type: 'spline',
+                    name: 'regression line',
+                    data: data_regression,
+                    }]
+
+                });  
+
+        },
+        'json');
+
+    });
+
+    });
+
+</script>
+{% endblock %}
