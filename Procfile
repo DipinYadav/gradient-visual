@@ -1,0 +1,1 @@
+web: gunicorn gradient_visual.wsgi
