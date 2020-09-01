@@ -1,4 +1,4 @@
-# Gradineet descent visualization
+# Gradient descent visualization
 
 <a href="https://gradientvisual.herokuapp.com/"> View Project</a>
 
